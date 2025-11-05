@@ -1,0 +1,100 @@
+---
+title: "**Análise Estatística do Desempenho Escolar no Brasil: Evidências do SAEB 2023**"
+subtitle: "Engenharia de Software - Probabilidade e Estatística - 2025.2"
+author: |
+  | Anderson Ramos Monteiro Dias
+  | Pedro Borges Minchev
+  | Tiago Sales Ribeiro
+  | Victor Rangel Tasse Magalhães
+  | Nome do Aluno 5
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Configuração global
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", out.width = "75%", warning = FALSE, message = FALSE)
+
+# --- LEITURA E PREPARAÇÃO ---
+dados <- read.csv("saeb_amostra_50k.csv", na.strings = c("", " ", ".", "*"))
+
+# SEXO (Q01)
+dados$Sexo_Label <- factor(dados$TX_RESP_Q01,
+                           levels = c("A", "B", "C"),
+                           labels = c("Masculino", "Feminino", "Não declarado"))
+
+# IDADE (Q02)
+dados$Idade_Label <- factor(dados$TX_RESP_Q02,
+                            levels = c("A", "B", "C", "D", "E", "F"),
+                            labels = c("<=16 anos", "17 anos", "18 anos", "19 anos", "20 anos", ">=21 anos"))
+
+# RAÇA/COR (Q04)
+dados$Raca_Label <- factor(dados$TX_RESP_Q04,
+                           levels = c("A", "B", "C", "D", "E", "F"),
+                           labels = c("Branca", "Preta", "Parda", "Amarela", "Indígena", "Não declarado"))
+
+# COMPUTADOR (Q12b)
+dados$Computador_Label <- factor(dados$TX_RESP_Q12b,
+                                 levels = c("A", "B", "C", "D"),
+                                 labels = c("Nenhum", "Um", "Dois", "Três ou mais"))
+
+# WI-FI (Q13b)
+dados$Wifi_Label <- factor(dados$TX_RESP_Q13b,
+                           levels = c("A", "B"),
+                           labels = c("Não", "Sim"))
+
+# CARRO (Q12f)
+dados$Carro_Label <- factor(dados$TX_RESP_Q12f,
+                            levels = c("A", "B", "C", "D"),
+                            labels = c("Nenhum", "Um", "Dois", "Três ou mais"))
+```
+
+# Introdução
+
+Este relatório apresenta uma análise estatística detalhada baseada nos microdados do Sistema de Avaliação da Educação Básica (SAEB) de 2023, com foco nos alunos concluintes do Ensino Médio (3ª e 4ª séries). O SAEB é o principal instrumento de monitoramento da qualidade educacional brasileira, fornecendo dados cruciais para a formulação de políticas públicas.
+
+O objetivo central deste estudo é investigar os fatores determinantes do desempenho escolar em Matemática, testando duas hipóteses principais:
+
+1. Existe uma **relação linear positiva** significativa entre a proficiência em Língua Portuguesa e a proficiência em Matemática, sugerindo que competências de leitura são fundamentais para o raciocínio matemático.
+
+2. O **Nível Socioeconômico (INSE)** do aluno exerce influência positiva sobre sua nota em Matemática, evidenciando o impacto de fatores externos à escola no desempenho acadêmico.
+
+# Metodologia de Amostragem
+
+Os dados originais do SAEB (`TS_ALUNO_34EM.csv`) contêm 2 milhões de registros. Para viabilizar as análises estatísticas neste trabalho, foi realizada uma **Amostragem Aleatória Simples (AAS)**.
+
+Utilizando um algoritmo estatístico de amostragem em R, fixou-se uma semente de aleatoriedade (`set.seed(123)`) para garantir a reprodutibilidade do processo, e foram selecionadas **50.000 observações da base original**. Este tamanho amostral é suficientemente grande para garantir a robustez das estimativas e dos testes estatísticos realizados a seguir.
+
+# Análise Descritiva
+
+Nesta seção, caracterizamos a amostra analisada quanto à participação efetiva nas provas, ao perfil sociodemográfico dos estudantes e ao seu desempenho nas avaliações cognitivas.
+
+## Taxa de Participação
+
+Inicialmente, verificamos a taxa de participação efetiva dos alunos na prova de Matemática. Consideramos como "Ausente/Sem Nota" aqueles que possuem valor nulo (`NA`) na variável de proficiência.
+
+\newpage
+```{r participação}
+dados$Status_MT <- ifelse(is.na(dados$PROFICIENCIA_MT_SAEB), "Ausente/Sem Nota", "Presente")
+tab_presenca <- table(dados$Status_MT)
+prop_presenca <- round(prop.table(tab_presenca) * 100, 2)
+tabela_final_presenca <- data.frame(Status = names(tab_presenca), Freq = as.vector(tab_presenca), Porc = as.vector(prop_presenca))
+
+kableExtra::kable(tabela_final_presenca,
+                  col.names = c("Situação", "Frequência", "Frequência (%)"),
+                  caption = "Participação na Prova da SAEB 2023") %>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center", latex_options = "hold_position")
+```
+Na amostra de 50.000 alunos, observa-se que `r tab_presenca["Ausente/Sem Nota"]` alunos (`r prop_presenca["Ausente/Sem Nota"]`%) não possuem registro de nota para a prova e nesse caso faltaram na prova. As análises de desempenho subsequentes consideram apenas os alunos com notas válidas.
+
+# Análise de Regressão Linear
+
+# Conclusão
