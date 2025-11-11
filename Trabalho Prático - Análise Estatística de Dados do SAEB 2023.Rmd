@@ -59,23 +59,25 @@ dados$Carro_Label <- factor(dados$TX_RESP_Q12f,
 
 # Introdução
 
-Este relatório apresenta uma análise estatística detalhada baseada nos microdados do Sistema de Avaliação da Educação Básica (SAEB) de 2023, com foco nos alunos concluintes do Ensino Médio (3ª e 4ª séries). O SAEB é o principal instrumento de monitoramento da qualidade educacional brasileira, fornecendo dados cruciais para a formulação de políticas públicas.
+O Sistema de Avaliação da Educação Básica (SAEB) constitui a principal ferramenta de monitoramento da qualidade educacional brasileira em larga escala. Este relatório apresenta uma análise estatística aprofundada baseada nos microdados do SAEB 2023, com foco nos alunos concluintes do Ensino Médio (3ª e 4ª séries).
 
-O objetivo central deste estudo é investigar os fatores determinantes do desempenho escolar em Matemática, testando duas hipóteses principais:
+O objetivo central deste estudo é investigar os determinantes do desempenho escolar em Matemática, testando estatisticamente as seguintes hipóteses:
 
-1. Existe uma **relação linear positiva** significativa entre a proficiência em Língua Portuguesa e a proficiência em Matemática, sugerindo que competências de leitura são fundamentais para o raciocínio matemático.
+- **H1 (Interdisciplinaridade)**: Existe uma forte relação linear positiva entre a proficiência em Língua Portuguesa e a proficiência em Matemática.
 
-2. O **Nível Socioeconômico (INSE)** do aluno exerce influência positiva sobre sua nota em Matemática, evidenciando o impacto de fatores externos à escola no desempenho acadêmico.
+- **H2 (Fator Socioeconômico)**: O nível socioeconômico (INSE) do aluno impacta positiva e significativamente sua nota em Matemática.
+
+- **H3 (Desigualdade de Gênero)**: Existem diferenças estatisticamente significativas no desempenho médio de Matemática entre alunos do sexo masculino e feminino.
 
 # Metodologia de Amostragem
 
-Os dados originais do SAEB (`TS_ALUNO_34EM.csv`) contêm 2 milhões de registros. Para viabilizar as análises estatísticas neste trabalho, foi realizada uma **Amostragem Aleatória Simples (AAS)**.
+Dada a magnitude da base original do SAEB (`TS_ALUNO_34EM.csv`), que censita milhões de estudantes, optou-se por trabalhar com uma amostra representativa.
 
-Utilizando um algoritmo estatístico de amostragem em R, fixou-se uma semente de aleatoriedade (`set.seed(123)`) para garantir a reprodutibilidade do processo, e foram selecionadas **50.000 observações da base original**. Este tamanho amostral é suficientemente grande para garantir a robustez das estimativas e dos testes estatísticos realizados a seguir.
+Foi realizada uma **Amostragem Aleatória Simples (AAS) de 50.000 observações**, garantindo que cada aluno da base original tivesse a mesma probabilidade de ser selecionado. Para assegurar a reprodutibilidade científica deste estudo, fixou-se a semente de aleatoriedade (`set.seed(123)`). Este tamanho amostral (`n=50.000`) é robusto o suficiente para minimizar erros padrões e garantir alta confiabilidade nas inferências estatísticas realizadas.
 
 # Análise Descritiva
 
-Nesta seção, caracterizamos a amostra analisada quanto à participação efetiva nas provas, ao perfil sociodemográfico dos estudantes e ao seu desempenho nas avaliações cognitivas.
+Nesta seção, exploramos o perfil dos estudantes e a distribuição de suas notas.
 
 ## Taxa de Participação
 
@@ -96,5 +98,7 @@ kableExtra::kable(tabela_final_presenca,
 Na amostra de 50.000 alunos, observa-se que `r tab_presenca["Ausente/Sem Nota"]` alunos (`r prop_presenca["Ausente/Sem Nota"]`%) não possuem registro de nota para a prova e nesse caso faltaram na prova. As análises de desempenho subsequentes consideram apenas os alunos com notas válidas.
 
 # Análise de Regressão Linear
+
+Nessa seção vamos testar cada hipótese feita na introdução para verificarmos se é veridica ou não
 
 # Conclusão
