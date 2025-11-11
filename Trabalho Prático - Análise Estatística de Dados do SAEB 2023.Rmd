@@ -59,15 +59,15 @@ dados$Carro_Label <- factor(dados$TX_RESP_Q12f,
 
 # Introdução
 
-O Sistema de Avaliação da Educação Básica (SAEB) constitui a principal ferramenta de monitoramento da qualidade educacional brasileira em larga escala. Este relatório apresenta uma análise estatística aprofundada baseada nos microdados do SAEB 2023, com foco nos alunos concluintes do Ensino Médio (3ª e 4ª séries).
+O Sistema de Avaliação da Educação Básica (SAEB) constitui a principal ferramenta de monitoramento da qualidade educacional brasileira. Este relatório apresenta uma análise estatística aprofundada baseada nos microdados do SAEB 2023, com foco nos alunos concluintes do Ensino Médio (3ª e 4ª séries).
 
-O objetivo central deste estudo é investigar os determinantes do desempenho escolar em Matemática, testando estatisticamente as seguintes hipóteses:
+O objetivo central deste estudo é investigar os determinantes do desempenho escolar em Matemática, avaliando descritivamente as seguintes hipóteses:
 
-- **H1 (Interdisciplinaridade)**: Existe uma forte relação linear positiva entre a proficiência em Língua Portuguesa e a proficiência em Matemática.
+- **H1 (Interdisciplinaridade):** Existe uma forte relação linear positiva entre a proficiência em Língua Portuguesa e a proficiência em Matemática na amostra analisada.
 
-- **H2 (Fator Socioeconômico)**: O nível socioeconômico (INSE) do aluno impacta positiva e significativamente sua nota em Matemática.
+- **H2 (Fator Socioeconômico):** O nível socioeconômico (INSE) do aluno impacta positivamente sua nota em Matemática na amostra analisada.
 
-- **H3 (Desigualdade de Gênero)**: Existem diferenças estatisticamente significativas no desempenho médio de Matemática entre alunos do sexo masculino e feminino.
+- **H3 (Desigualdade de Gênero):** Existem diferenças descritivas no desempenho médio de Matemática entre alunos do sexo masculino e feminino na amostra analisada.
 
 # Metodologia de Amostragem
 
@@ -99,22 +99,16 @@ Na amostra de 50.000 alunos, observa-se que `r tab_presenca["Ausente/Sem Nota"]`
 
 # Análise Bivariada: Correlação e Regressão
 
-Após a análise univariada (onde olhamos cada variável separadamente), esta seção investiga a **relação entre duas variáveis** (análise bivariada). O objetivo é descrever como as variáveis quantitativas se comportam juntas dentro da nossa amostra.
-
-Para isso, usaremos duas ferramentas estatísticas descritivas:
-
-1.  **Correlação Linear (Pearson):** Usada para medir a *força* e a *direção* da relação linear entre duas variáveis (o quão perto os pontos estão de uma reta).
-2.  **Regressão Linear Simples:** Usada para *modelar* essa relação, encontrando a equação da reta que melhor descreve a tendência dos dados.
+Esta seção investiga a relação entre duas variáveis (análise bivariada). O objetivo é descrever como as variáveis quantitativas se comportam juntas dentro da nossa amostra, usando Correlação de Pearson e Regressão Linear Simples.
 
 ## Análise H1 - A Relação entre Leitura e Matemática
 
 Investigamos se o desempenho em Língua Portuguesa (variável independente) pode explicar o desempenho em Matemática (variável dependente).
 
-## Resultados Obtidos
+### Resultados Obtidos
 
 ```{r h1_regressao, fig.cap="Relação entre Proficiência em LP e MT"}
 # --- CÁLCULOS PRIMEIRO ---
-# É essencial calcular as variáveis ANTES de usá-las.
 modelo <- lm(PROFICIENCIA_MT_SAEB ~ PROFICIENCIA_LP_SAEB, data = dados)
 s_modelo <- summary(modelo)
 b0 <- coef(modelo)[1]
@@ -140,6 +134,7 @@ ggplot(dados_plot, aes(x = PROFICIENCIA_LP_SAEB, y = PROFICIENCIA_MT_SAEB)) +
     axis.title.x = element_text(margin = margin(t = 15)),
     axis.title.y = element_text(margin = margin(r = 15))
   )
+
 ```
 
 **O Coeficiente de Correlação (r) foi de `r round(correlacao, 4)`**.Este valor indica uma correlação linear positiva moderada entre as duas proficiências, ou seja, uma pouca dependência entre essas duas variáveis mas que essa "dependência" é crescente. Para quantificar essa relação, ajustamos o seguinte modelo de regressão linear:
@@ -148,8 +143,10 @@ $$ {Nota}{MT} = `r round(b0, 2)` + `r round(b1, 2)` \cdot (Nota{LP}) $$
 
 ### Interpretação dos Resultados
 
-**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2, 4)`.
+**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2, 4)`.  `r if (r2 > 0.6) { paste("Isso significa que **", round(r2*100, 1), "%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação nas notas de Língua Portuguesa. Em um contexto de dados educacionais, um $R^2$ dessa magnitude é considerado **excepcionalmente alto**.") } else if (r2 > 0.3) { paste("Isso significa que **", round(r2*100, 1), "%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação nas notas de Língua Portuguesa. Trata-se de um **poder explicativo moderado**.") } else { paste("Isso significa que apenas **", round(r2*100, 1), "%** da variabilidade nas notas de Matemática (nesta amostra) pode ser explicada pela nota de Português, indicando um **poder explicativo fraco**.")}`
 
-**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1, 2)` 
+**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1, 2)` indica que, em média, para cada 1 ponto adicional que um aluno obtém em Língua Portuguesa, espera-se um aumento de `r round(b1, 2)` pontos em sua nota de Matemática.
 
 # Conclusão
+
+(Você precisa escrever esta seção. Faça um resumo dos principais achados. Ex: "A análise descritiva da amostra de 50.000 alunos revelou... A análise de regressão confirmou a H1, mostrando que... A H2 também foi corroborada... Conclui-se que, nesta amostra, o desempenho em LP é um forte indicador do desempenho em MT...")
