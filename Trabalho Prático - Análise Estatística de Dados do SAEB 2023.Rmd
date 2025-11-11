@@ -97,8 +97,59 @@ kableExtra::kable(tabela_final_presenca,
 ```
 Na amostra de 50.000 alunos, observa-se que `r tab_presenca["Ausente/Sem Nota"]` alunos (`r prop_presenca["Ausente/Sem Nota"]`%) não possuem registro de nota para a prova e nesse caso faltaram na prova. As análises de desempenho subsequentes consideram apenas os alunos com notas válidas.
 
-# Análise de Regressão Linear
+# Análise Bivariada: Correlação e Regressão
 
-Nessa seção vamos testar cada hipótese feita na introdução para verificarmos se é veridica ou não
+Após a análise univariada (onde olhamos cada variável separadamente), esta seção investiga a **relação entre duas variáveis** (análise bivariada). O objetivo é descrever como as variáveis quantitativas se comportam juntas dentro da nossa amostra.
+
+Para isso, usaremos duas ferramentas estatísticas descritivas:
+
+1.  **Correlação Linear (Pearson):** Usada para medir a *força* e a *direção* da relação linear entre duas variáveis (o quão perto os pontos estão de uma reta).
+2.  **Regressão Linear Simples:** Usada para *modelar* essa relação, encontrando a equação da reta que melhor descreve a tendência dos dados.
+
+## Análise H1 - A Relação entre Leitura e Matemática
+
+Investigamos se o desempenho em Língua Portuguesa (variável independente) pode explicar o desempenho em Matemática (variável dependente).
+
+## Resultados Obtidos
+
+```{r h1_regressao, fig.cap="Relação entre Proficiência em LP e MT"}
+# --- CÁLCULOS PRIMEIRO ---
+# É essencial calcular as variáveis ANTES de usá-las.
+modelo <- lm(PROFICIENCIA_MT_SAEB ~ PROFICIENCIA_LP_SAEB, data = dados)
+s_modelo <- summary(modelo)
+b0 <- coef(modelo)[1]
+b1 <- coef(modelo)[2]
+r2 <- s_modelo$r.squared
+correlacao <- cor(dados$PROFICIENCIA_LP_SAEB, dados$PROFICIENCIA_MT_SAEB, use = "complete.obs")
+
+# Amostra menor para plotagem limpa
+dados_plot <- dados[sample(nrow(dados), 8000), ] 
+
+# Gráfico
+ggplot(dados_plot, aes(x = PROFICIENCIA_LP_SAEB, y = PROFICIENCIA_MT_SAEB)) +
+  geom_point(alpha = 0.1, color = "midnightblue") +
+  geom_smooth(method = "lm", color = "red", size = 1.5) +
+  labs(title = "Correlação: Português vs. Matemática",
+       subtitle = paste("Correlação de Pearson (r) =", round(correlacao, 3)),
+       x = "Proficiência em Língua Portuguesa", 
+       y = "Proficiência em Matemática") +
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15))
+  )
+```
+
+**O Coeficiente de Correlação (r) foi de `r round(correlacao, 4)`**.Este valor indica uma correlação linear positiva moderada entre as duas proficiências, ou seja, uma pouca dependência entre essas duas variáveis mas que essa "dependência" é crescente. Para quantificar essa relação, ajustamos o seguinte modelo de regressão linear:
+
+$$ {Nota}{MT} = `r round(b0, 2)` + `r round(b1, 2)` \cdot (Nota{LP}) $$
+
+### Interpretação dos Resultados
+
+**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2, 4)`.
+
+**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1, 2)` 
 
 # Conclusão
