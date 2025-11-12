@@ -146,6 +146,52 @@ $$ {Nota}{MT} = `r round(b0, 2)` + `r round(b1, 2)` \cdot (Nota{LP}) $$
 
 **Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1, 2)` indica que, em média, para cada 1 ponto adicional que um aluno obtém em Língua Portuguesa, espera-se um aumento de `r round(b1, 2)` pontos em sua nota de Matemática.
 
+## Análise H2 - O Impacto do Nível Socioeconômico (INSE) na Matemática
+
+Investigamos se o Nível Socioeconômico (INSE) do aluno (variável independente) pode explicar o desempenho em Matemática (variável dependente).
+
+### Resultados Obtidos
+
+```{r h2_regressao, fig.cap="Relação entre INSE e Proficiência em MT"}
+# --- CÁLCULOS PRIMEIRO ---
+modelo_h2 <- lm(PROFICIENCIA_MT_SAEB ~ INSE_ALUNO, data = dados)
+s_modelo_h2 <- summary(modelo_h2)
+b0_h2 <- coef(modelo_h2)[1]
+b1_h2 <- coef(modelo_h2)[2]
+r2_h2 <- s_modelo_h2$r.squared
+correlacao_h2 <- cor(dados$INSE_ALUNO, dados$PROFICIENCIA_MT_SAEB, use = "complete.obs")
+
+# Amostra menor para plotagem limpa
+dados_plot_h2 <- dados[sample(nrow(dados), 8000), ] 
+
+# Gráfico
+ggplot(dados_plot_h2, aes(x = INSE_ALUNO, y = PROFICIENCIA_MT_SAEB)) +
+  geom_point(alpha = 0.1, color = "darkgreen") +
+  geom_smooth(method = "lm", color = "orange", linewidth = 1.5) +
+  labs(title = "Correlação: INSE vs. Matemática",
+       subtitle = paste("Correlação de Pearson (r) =", round(correlacao_h2, 3)),
+       x = "Nível Socioeconômico (INSE)", 
+       y = "Proficiência em Matemática") +
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15))
+  )
+
+```
+
+**O Coeficiente de Correlação (r) foi de `r round(correlacao_h2, 4)`**. Este valor indica uma correlação linear positiva `r if (correlacao_h2 > 0.5) { "forte" } else if (correlacao_h2 > 0.3) { "moderada" } else { "fraca" }` entre o INSE e a proficiência em Matemática, ou seja, uma `r if (correlacao_h2 > 0) { "relação crescente" } else { "relação decrescente" }`. Para quantificar essa relação, ajustamos o seguinte modelo de regressão linear:
+
+$$ {Nota}{MT} = `r round(b0_h2, 2)` + `r round(b1_h2, 2)` \cdot (INSE) $$
+
+### Interpretação dos Resultados
+
+**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h2, 4)`.  `r if (r2_h2 > 0.6) { paste("Isso significa que **", round(r2_h2*100, 1), "%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no INSE. Em um contexto de dados educacionais, um $R^2$ dessa magnitude é considerado **excepcionalmente alto**.") } else if (r2_h2 > 0.3) { paste("Isso significa que **", round(r2_h2*100, 1), "%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no INSE. Trata-se de um **poder explicativo moderado**.") } else { paste("Isso significa que apenas **", round(r2_h2*100, 1), "%** da variabilidade nas notas de Matemática (nesta amostra) pode ser explicada pelo INSE, indicando um **poder explicativo fraco**.")}`
+
+**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1_h2, 2)` indica que, em média, para cada 1 ponto adicional que um aluno obtém no INSE, espera-se um aumento de `r round(b1_h2, 2)` pontos em sua nota de Matemática.
+
 # Conclusão
 
 (Você precisa escrever esta seção. Faça um resumo dos principais achados. Ex: "A análise descritiva da amostra de 50.000 alunos revelou... A análise de regressão confirmou a H1, mostrando que... A H2 também foi corroborada... Conclui-se que, nesta amostra, o desempenho em LP é um forte indicador do desempenho em MT...")
