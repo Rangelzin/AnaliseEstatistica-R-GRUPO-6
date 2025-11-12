@@ -116,13 +116,12 @@ b1 <- coef(modelo)[2]
 r2 <- s_modelo$r.squared
 correlacao <- cor(dados$PROFICIENCIA_LP_SAEB, dados$PROFICIENCIA_MT_SAEB, use = "complete.obs")
 
-# Amostra menor para plotagem limpa
-dados_plot <- dados[sample(nrow(dados), 8000), ] 
-
-# Gráfico
-ggplot(dados_plot, aes(x = PROFICIENCIA_LP_SAEB, y = PROFICIENCIA_MT_SAEB)) +
+# A transparência (alpha=0.1) é essencial para evitar o "overplotting"
+ggplot(dados, aes(x = PROFICIENCIA_LP_SAEB, y = PROFICIENCIA_MT_SAEB)) +
   geom_point(alpha = 0.1, color = "midnightblue") +
-  geom_smooth(method = "lm", color = "red", size = 1.5) +
+  
+  geom_smooth(method = "lm", color = "red", linewidth = 1.5) +
+  
   labs(title = "Correlação: Português vs. Matemática",
        subtitle = paste("Correlação de Pearson (r) =", round(correlacao, 3)),
        x = "Proficiência em Língua Portuguesa", 
