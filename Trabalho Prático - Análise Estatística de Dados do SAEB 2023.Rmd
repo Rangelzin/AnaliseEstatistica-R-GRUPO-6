@@ -188,10 +188,109 @@ $$ {Nota}{MT} = `r round(b0_h2, 2)` + `r round(b1_h2, 2)` \cdot (INSE) $$
 
 ### Interpretação dos Resultados
 
-**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h2, 4)`.  `r if (r2_h2 > 0.6) { paste("Isso significa que **", round(r2_h2*100, 1), "%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no INSE. Em um contexto de dados educacionais, um $R^2$ dessa magnitude é considerado **excepcionalmente alto**.") } else if (r2_h2 > 0.3) { paste("Isso significa que **", round(r2_h2*100, 1), "%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no INSE. Trata-se de um **poder explicativo moderado**.") } else { paste("Isso significa que apenas **", round(r2_h2*100, 1), "%** da variabilidade nas notas de Matemática (nesta amostra) pode ser explicada pelo INSE, indicando um **poder explicativo fraco**.")}`
+**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = r round(r2_h6, 4). Isso significa que r round(r2_h6*100, 1)% da variabilidade total nas notas de Língua Portuguesa (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado.
 
-**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1_h2, 2)` indica que, em média, para cada 1 ponto adicional que um aluno obtém no INSE, espera-se um aumento de `r round(b1_h2, 2)` pontos em sua nota de Matemática.
+**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = r round(b1_h6, 2) indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em LP, espera-se uma redução de r abs(round(b1_h6, 2)) pontos em sua nota de Língua Portuguesa.
 
-# Conclusão
 
-(Você precisa escrever esta seção. Faça um resumo dos principais achados. Ex: "A análise descritiva da amostra de 50.000 alunos revelou... A análise de regressão confirmou a H1, mostrando que... A H2 também foi corroborada... Conclui-se que, nesta amostra, o desempenho em LP é um forte indicador do desempenho em MT...")
+##H3 - Relação Incerteza-Proficiência em Língua Portuguesa
+
+Investigamos se a incerteza estatística da nota em Língua Portuguesa (Erro Padrão) pode explicar o desempenho efetivo nessa mesma disciplina (Proficiência em LP).
+
+### Resultados Obtidos
+
+```{r h3_regressao, fig.cap="Relação entre Erro Padrão LP e Proficiência LP"}
+# --- CÁLCULOS H3 ---
+# Filtra NAs em ambas as variáveis
+dados_h3 <- dados %>%
+  filter(!is.na(PROFICIENCIA_LP_SAEB) & !is.na(ERRO_PADRAO_LP_SAEB))
+
+# Regressão e Estatísticas Descritivas
+modelo_h3 <- lm(PROFICIENCIA_LP_SAEB ~ ERRO_PADRAO_LP_SAEB, data = dados_h3)
+s_modelo_h3 <- summary(modelo_h3)
+b0_h3 <- coef(modelo_h3)[1]
+b1_h3 <- coef(modelo_h3)[2]
+r2_h3 <- s_modelo_h3$r.squared
+correlacao_h3 <- cor(dados_h3$ERRO_PADRAO_LP_SAEB, dados_h3$PROFICIENCIA_LP_SAEB, use = "complete.obs")
+
+# Amostra menor para plotagem limpa (necessário para o gráfico)
+dados_plot_h3 <- dados_h3[sample(nrow(dados_h3), 8000), ]
+
+# Gráfico
+ggplot(dados_plot_h3, aes(x = ERRO_PADRAO_LP_SAEB, y = PROFICIENCIA_LP_SAEB)) +
+  geom_point(alpha = 0.1, color = "darkgreen") +
+  geom_smooth(method = "lm", color = "darkred", linewidth = 1.5) +
+  labs(title = "Correlação: Erro Padrão LP vs. Proficiência LP",
+       subtitle = paste("Correlação de Pearson (r) =", round(correlacao_h3, 3)),
+       x = "Erro Padrão em Língua Portuguesa",
+       y = "Proficiência em Língua Portuguesa") +
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15))
+  )
+```
+
+**O Coeficiente de Correlação (r) foi de r round(correlacao_h3, 4).** Este valor indica uma correlação linear negativa moderada entre as duas variáveis, sugerindo que, quanto maior a incerteza na medição da proficiência do aluno, menor tende a ser sua nota. Para quantificar essa relação, ajustamos o seguinte modelo de regressão linear:
+
+$${Nota}{LP} = `r round(b0_h3, 2)` - `r abs(round(b1_h3, 2))` \cdot (\text{Erro Padrão LP})$$
+
+### Interpretação dos Resultados
+
+**Poder Explicativo ($R^2$):** O Coeficiente de Determinação foi de $R^2$ = r round(r2_h3, 4). Isso significa que r round(r2_h3*100, 1)% da variabilidade total nas notas de Língua Portuguesa (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado.
+
+**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = r round(b1_h3, 2) indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em LP, espera-se uma redução de r abs(round(b1_h3, 2)) pontos em sua nota de Língua Portuguesa.
+
+
+
+##Análise H4 - Relação Incerteza-Proficiência em Matemática
+
+Investigamos se o Erro Padrão da Proficiência em Matemática (variável independente) pode explicar o desempenho efetivo nessa mesma disciplina (Proficiência em MT - variável dependente).
+
+### Resultados Obtidos
+
+```{r h4_regressao, fig.cap="Relação entre Erro Padrão MT e Proficiência MT"}
+# --- CÁLCULOS H4 ---
+# Filtra NAs em ambas as variáveis
+dados_h4 <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB) & !is.na(ERRO_PADRAO_MT_SAEB))
+
+# Regressão e Estatísticas Descritivas
+modelo_h4 <- lm(PROFICIENCIA_MT_SAEB ~ ERRO_PADRAO_MT_SAEB, data = dados_h4)
+s_modelo_h4 <- summary(modelo_h4)
+b0_h4 <- coef(modelo_h4)[1]
+b1_h4 <- coef(modelo_h4)[2]
+r2_h4 <- s_modelo_h4$r.squared
+correlacao_h4 <- cor(dados_h4$ERRO_PADRAO_MT_SAEB, dados_h4$PROFICIENCIA_MT_SAEB, use = "complete.obs")
+
+# Amostra menor para plotagem limpa
+dados_plot_h4 <- dados_h4[sample(nrow(dados_h4), 8000), ]
+
+# Gráfico
+ggplot(dados_plot_h4, aes(x = ERRO_PADRAO_MT_SAEB, y = PROFICIENCIA_MT_SAEB)) +
+  geom_point(alpha = 0.1, color = "darkred") +
+  geom_smooth(method = "lm", color = "darkblue", linewidth = 1.5) +
+  labs(title = "Correlação: Erro Padrão MT vs. Proficiência MT",
+       subtitle = paste("Correlação de Pearson (r) =", round(correlacao_h4, 3)),
+       x = "Erro Padrão em Matemática",
+       y = "Proficiência em Matemática") +
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15))
+  )
+```
+
+**O Coeficiente de Correlação (r) foi de r round(correlacao_h4, 4). Este valor indica uma correlação linear negativa forte entre as duas variáveis. Para quantificar essa relação, ajustamos o seguinte modelo de regressão linear:
+
+$${Nota}{MT} = `r round(b0_h4, 2)` - `r abs(round(b1_h4, 2))` \cdot (\text{Erro Padrão MT})$$
+
+### Interpretação dos Resultados
+
+**Poder Explicativo ($R^2$):** O Coeficiente de Determinação foi de $R^2$ = r round(r2_h4, 4). Isso significa que r round(r2_h4*100, 1)% da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado a alto, sendo o maior valor de $R^2$ encontrado nas hipóteses analisadas.
+
+**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = r round(b1_h4, 2) indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em MT, espera-se uma redução de r abs(round(b1_h4, 2)) pontos em sua nota de Matemática.

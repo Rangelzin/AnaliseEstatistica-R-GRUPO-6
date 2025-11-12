@@ -1,0 +1,340 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Análise Estatística do Desempenho Escolar no Brasil: Evidências do SAEB 2023},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{\textbf{Análise Estatística do Desempenho Escolar no Brasil:
+Evidências do SAEB 2023}}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Engenharia de Software - Probabilidade e Estatística - 2025.2}
+\author{Anderson Ramos Monteiro Dias\\
+Pedro Borges Minchev\\
+Tiago Sales Ribeiro\\
+Victor Rangel Tasse Magalhães\\
+Nome do Aluno 5}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introdução}\label{introduuxe7uxe3o}
+
+O Sistema de Avaliação da Educação Básica (SAEB) constitui a principal
+ferramenta de monitoramento da qualidade educacional brasileira. Este
+relatório apresenta uma análise estatística aprofundada baseada nos
+microdados do SAEB 2023, com foco nos alunos concluintes do Ensino Médio
+(3ª e 4ª séries).
+
+O objetivo central deste estudo é investigar os determinantes do
+desempenho escolar em Matemática, avaliando descritivamente as seguintes
+hipóteses:
+
+\begin{itemize}
+\item
+  \textbf{H1 (Interdisciplinaridade):} Existe uma forte relação linear
+  positiva entre a proficiência em Língua Portuguesa e a proficiência em
+  Matemática na amostra analisada.
+\item
+  \textbf{H2 (Fator Socioeconômico):} O nível socioeconômico (INSE) do
+  aluno impacta positivamente sua nota em Matemática na amostra
+  analisada.
+\item
+  \textbf{H3 (Desigualdade de Gênero):} Existem diferenças descritivas
+  no desempenho médio de Matemática entre alunos do sexo masculino e
+  feminino na amostra analisada.
+\end{itemize}
+
+\section{Metodologia de Amostragem}\label{metodologia-de-amostragem}
+
+Dada a magnitude da base original do SAEB
+(\texttt{TS\_ALUNO\_34EM.csv}), que censita milhões de estudantes,
+optou-se por trabalhar com uma amostra representativa.
+
+Foi realizada uma \textbf{Amostragem Aleatória Simples (AAS) de 50.000
+observações}, garantindo que cada aluno da base original tivesse a mesma
+probabilidade de ser selecionado. Para assegurar a reprodutibilidade
+científica deste estudo, fixou-se a semente de aleatoriedade
+(\texttt{set.seed(123)}). Este tamanho amostral (\texttt{n=50.000}) é
+robusto o suficiente para minimizar erros padrões e garantir alta
+confiabilidade nas inferências estatísticas realizadas.
+
+\section{Análise Descritiva}\label{anuxe1lise-descritiva}
+
+Nesta seção, exploramos o perfil dos estudantes e a distribuição de suas
+notas.
+
+\subsection{Taxa de Participação}\label{taxa-de-participauxe7uxe3o}
+
+Inicialmente, verificamos a taxa de participação efetiva dos alunos na
+prova de Matemática. Consideramos como ``Ausente/Sem Nota'' aqueles que
+possuem valor nulo (\texttt{NA}) na variável de proficiência.
+
+\newpage
+
+\begin{longtable}[t]{lrr}
+\caption{\label{tab:participação}Participação na Prova da SAEB 2023}\\
+\toprule
+Situação & Frequência & Frequência (\%)\\
+\midrule
+Ausente/Sem Nota & 13552 & 27.1\\
+Presente & 36448 & 72.9\\
+\bottomrule
+\end{longtable}
+
+Na amostra de 50.000 alunos, observa-se que 13552 alunos (27.1\%) não
+possuem registro de nota para a prova e nesse caso faltaram na prova. As
+análises de desempenho subsequentes consideram apenas os alunos com
+notas válidas.
+
+\section{Análise Bivariada: Correlação e
+Regressão}\label{anuxe1lise-bivariada-correlauxe7uxe3o-e-regressuxe3o}
+
+Esta seção investiga a relação entre duas variáveis (análise bivariada).
+O objetivo é descrever como as variáveis quantitativas se comportam
+juntas dentro da nossa amostra, usando Correlação de Pearson e Regressão
+Linear Simples.
+
+\subsection{Análise H1 - A Relação entre Leitura e
+Matemática}\label{anuxe1lise-h1---a-relauxe7uxe3o-entre-leitura-e-matemuxe1tica}
+
+Investigamos se o desempenho em Língua Portuguesa (variável
+independente) pode explicar o desempenho em Matemática (variável
+dependente).
+
+\subsubsection{Resultados Obtidos}\label{resultados-obtidos}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.75\linewidth]{Trabalho-Prático---Análise-Estatística-de-Dados-do-SAEB-2023_files/figure-latex/h1_regressao-1} 
+
+}
+
+\caption{Relação entre Proficiência em LP e MT}\label{fig:h1_regressao}
+\end{figure}
+
+\textbf{O Coeficiente de Correlação (r) foi de 0.5668}.Este valor indica
+uma correlação linear positiva moderada entre as duas proficiências, ou
+seja, uma pouca dependência entre essas duas variáveis mas que essa
+``dependência'' é crescente. Para quantificar essa relação, ajustamos o
+seguinte modelo de regressão linear:
+
+\[ {Nota}{MT} = 125.15 + 0.52 \cdot (Nota{LP}) \]
+
+\subsubsection{Interpretação dos
+Resultados}\label{interpretauxe7uxe3o-dos-resultados}
+
+\textbf{Poder Explicativo (\(R^2\))}: O Coeficiente de Determinação foi
+de \(R^2\) = 0.3213. Isso significa que ** 32.1 \%** da variabilidade
+total nas notas de Matemática (nesta amostra) pode ser explicada pela
+variação nas notas de Língua Portuguesa. Trata-se de um \textbf{poder
+explicativo moderado}.
+
+\textbf{Interpretação do Coeficiente (\(\beta_1\))}: O coeficiente
+angular \(\beta_1\) = 0.52 indica que, em média, para cada 1 ponto
+adicional que um aluno obtém em Língua Portuguesa, espera-se um aumento
+de 0.52 pontos em sua nota de Matemática.
+
+\subsection{Análise H2 - O Impacto do Nível Socioeconômico (INSE) na
+Matemática}\label{anuxe1lise-h2---o-impacto-do-nuxedvel-socioeconuxf4mico-inse-na-matemuxe1tica}
+
+Investigamos se o Nível Socioeconômico (INSE) do aluno (variável
+independente) pode explicar o desempenho em Matemática (variável
+dependente).
+
+\subsubsection{Resultados Obtidos}\label{resultados-obtidos-1}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.75\linewidth]{Trabalho-Prático---Análise-Estatística-de-Dados-do-SAEB-2023_files/figure-latex/h2_regressao-1} 
+
+}
+
+\caption{Relação entre INSE e Proficiência em MT}\label{fig:h2_regressao}
+\end{figure}
+
+\textbf{O Coeficiente de Correlação (r) foi de 0.1968}. Este valor
+indica uma correlação linear positiva fraca entre o INSE e a
+proficiência em Matemática, ou seja, uma relação crescente. Para
+quantificar essa relação, ajustamos o seguinte modelo de regressão
+linear:
+
+\[ {Nota}{MT} = 220.6 + 9.88 \cdot (INSE) \]
+
+\subsubsection{Interpretação dos
+Resultados}\label{interpretauxe7uxe3o-dos-resultados-1}
+
+\textbf{Poder Explicativo (\(R^2\))}: O Coeficiente de Determinação foi
+de \(R^2\) = r round(r2\_h6, 4). Isso significa que r round(r2\_h6*100,
+1)\% da variabilidade total nas notas de Língua Portuguesa (nesta
+amostra) pode ser explicada pela variação no Erro Padrão da
+proficiência. Trata-se de um poder explicativo moderado.
+
+\textbf{Interpretação do Coeficiente (\(\beta_1\))}: O coeficiente
+angular \(\beta_1\) = r round(b1\_h6, 2) indica que, em média, para cada
+1 ponto adicional no Erro Padrão da Proficiência em LP, espera-se uma
+redução de r abs(round(b1\_h6, 2)) pontos em sua nota de Língua
+Portuguesa.
+
+\#\#H6 - Relação Incerteza-Proficiência em Língua Portuguesa
+
+Investigamos se a incerteza estatística da nota em Língua Portuguesa
+(Erro Padrão) pode explicar o desempenho efetivo nessa mesma disciplina
+(Proficiência em LP).
+
+\subsubsection{Resultados Obtidos}\label{resultados-obtidos-2}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.75\linewidth]{Trabalho-Prático---Análise-Estatística-de-Dados-do-SAEB-2023_files/figure-latex/h6_regressao-1} 
+
+}
+
+\caption{Relação entre Erro Padrão LP e Proficiência LP}\label{fig:h6_regressao}
+\end{figure}
+
+\textbf{O Coeficiente de Correlação (r) foi de r round(correlacao\_h6,
+4).} Este valor indica uma correlação linear negativa moderada entre as
+duas variáveis, sugerindo que, quanto maior a incerteza na medição da
+proficiência do aluno, menor tende a ser sua nota. Para quantificar essa
+relação, ajustamos o seguinte modelo de regressão linear:
+
+\[{Nota}{LP} = 452.74 - 7.86 \cdot (\text{Erro Padrão LP})\]
+
+\subsubsection{Interpretação dos
+Resultados}\label{interpretauxe7uxe3o-dos-resultados-2}
+
+\textbf{Poder Explicativo (\(R^2\)):} O Coeficiente de Determinação foi
+de \(R^2\) = r round(r2\_h6, 4). Isso significa que r round(r2\_h6*100,
+1)\% da variabilidade total nas notas de Língua Portuguesa (nesta
+amostra) pode ser explicada pela variação no Erro Padrão da
+proficiência. Trata-se de um poder explicativo moderado.Interpretação do
+Coeficiente (\(\beta_1\)): O coeficiente angular \(\beta_1\) = r
+round(b1\_h6, 2) indica que, em média, para cada 1 ponto adicional no
+Erro Padrão da Proficiência em LP, espera-se uma redução de r
+abs(round(b1\_h6, 2)) pontos em sua nota de Língua Portuguesa.
+
+\textbf{Interpretação do Coeficiente (\(\beta_1\))}: O coeficiente
+angular \(\beta_1\) = 0.52 indica que, em média, para cada 1 ponto
+adicional que um aluno obtém em Língua Portuguesa, espera-se um aumento
+de 0.52 pontos em sua nota de Matemática.
+
+\#\#Análise H7 - Relação Incerteza-Proficiência em Matemática
+
+Investigamos se o Erro Padrão da Proficiência em Matemática (variável
+independente) pode explicar o desempenho efetivo nessa mesma disciplina
+(Proficiência em MT - variável dependente).
+
+\subsubsection{Resultados Obtidos}\label{resultados-obtidos-3}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.75\linewidth]{Trabalho-Prático---Análise-Estatística-de-Dados-do-SAEB-2023_files/figure-latex/h7_regressao-1} 
+
+}
+
+\caption{Relação entre Erro Padrão MT e Proficiência MT}\label{fig:h7_regressao}
+\end{figure}
+
+\textbf{O Coeficiente de Correlação (r) foi de r round(correlacao\_h6,
+4).} Este valor indica uma correlação linear negativa moderada entre as
+duas variáveis, sugerindo que, quanto maior a incerteza na medição da
+proficiência do aluno, menor tende a ser sua nota. Para quantificar essa
+relação, ajustamos o seguinte modelo de regressão linear:
+
+\[{Nota}{LP} = 452.74 - 7.86 \cdot (\text{Erro Padrão LP})\]
+
+\subsubsection{Interpretação dos
+Resultados}\label{interpretauxe7uxe3o-dos-resultados-3}
+
+\textbf{Poder Explicativo (\(R^2\)):} O Coeficiente de Determinação foi
+de \(R^2 = 0.3939\). Isso significa que \(39.4\%\) da variabilidade
+total nas notas de Matemática (nesta amostra) pode ser explicada pela
+variação no Erro Padrão da proficiência. Trata-se de um poder
+explicativo moderado a alto, sendo maior que o poder explicativo
+encontrado tanto na H1 quanto na H6.
+
+\textbf{Interpretação do Coeficiente (\(\beta_1\))}: O coeficiente
+angular \(\beta_1 = -4.54\) indica que, em média, para cada 1 ponto
+adicional no Erro Padrão da Proficiência em MT, espera-se uma redução de
+\(4.54\) pontos em sua nota de Matemática.
+
+\end{document}
