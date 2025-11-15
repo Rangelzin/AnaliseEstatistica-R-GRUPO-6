@@ -74,6 +74,30 @@ dados$Carro_Label <- factor(dados$TX_RESP_Q12f,
 dados$Regiao_Label <- factor(dados$ID_REGIAO,
                             levels = c(1, 2, 3, 4, 5),
                             labels = c("Norte", "Nordeste", "Sudeste", "Sul", "Centro-Oeste"))
+
+# IN_PUBLICA (Tipo de Escola)
+dados$Publica_Label <- factor(dados$IN_PUBLICA,
+                              levels = c(0, 1),
+                              labels = c("Privada", "Pública"))
+
+# ID_LOCALIZACAO (Área)
+dados$Localizacao_Label <- factor(dados$ID_LOCALIZACAO,
+                                  levels = c(1, 2),
+                                  labels = c("Urbana", "Rural"))
+
+# ID_UF (Estado) - Necessário para o gráfico de UFs
+dados$UF_Label <- factor(dados$ID_UF,
+    levels = c(11, 12, 13, 14, 15, 16, 17, # Norte
+               21, 22, 23, 24, 25, 26, 27, 28, 29, # Nordeste
+               31, 32, 33, 35, # Sudeste
+               41, 42, 43, # Sul
+               50, 51, 52, 53), # Centro-Oeste
+    labels = c("RO", "AC", "AM", "RR", "PA", "AP", "TO",
+               "MA", "PI", "CE", "RN", "PB", "PE", "AL", "SE", "BA",
+               "MG", "ES", "RJ", "SP",
+               "PR", "SC", "RS",
+               "MS", "MT", "GO", "DF")
+)
 ```
 
 # Introdução
@@ -425,6 +449,55 @@ Piores Desempenhos (Norte e Nordeste): As Regiões Norte e Nordeste exibem o des
 
 Em termos de dispersão (tamanho das caixas e dos whiskers), todas as regiões mostram uma variabilidade interna similar na proficiência, o que sugere que o fator regional influencia primariamente a tendência central (média e mediana) das notas e não a dispersão dos resultados.
 
+## Análise Categórica: média de proeficiência em matemática por tipo de escola
+
+Nesta seção, investigamos a relação entre o desempenho em Matemática e o tipo de administração da escola (Pública ou Privada).
+
+```{r proMat_por_escola, fig.cap="Gráfico de Colunas: Média de Proficiência em matemática x Tipo Escola  (MT)", fig.pos = 'H'}
+dados_validos_mt <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB))
+
+ggplot(dados_validos_mt, aes(x = Publica_Label, y = PROFICIENCIA_MT_SAEB, fill = Publica_Label)) +
+  stat_summary(fun = "mean", geom = "bar") +
+  
+  stat_summary(fun.data = "mean_cl_normal", geom = "text",
+               aes(label = round(..y.., 2)), vjust = -0.5) +
+  labs(title = "Média de Proficiência em Matemática por Tipo de Escola",
+       x = "Tipo de Escola",
+       y = "Média de Proficiência em matemática (MT)")
+```
+
+Interpretação do Gráfico (Tipo de Escola):
+
+A análise do gráfico de barras revela uma disparidade descritiva substancial no desempenho médio entre os tipos de escola. Na amostra analisada, alunos da rede Privada apresentam uma média de proficiência em Matemática(311.44) significativamente superior à dos alunos da rede Pública(267.38).
+
+## Análise Categórica: Desempenho por Acesso à Internet (Wi-Fi)
+
+Nesta seção, investigamos se o acesso à internet Wi-Fi em casa, uma variável proxy para recursos domésticos, está associada ao desempenho em Matemática.
+
+```{r proMat_por_acessoWifi, fig.cap="Gráfico de Colunas: Média de Proficiência em Matemática x Acesso ao Wi-Fi  (MT)", fig.pos = 'H'}
+dados_media_wifi <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB) & !is.na(Wifi_Label))
+
+ggplot(dados_media_wifi, aes(x = Wifi_Label, y = PROFICIENCIA_MT_SAEB, fill = Wifi_Label)) +
+  stat_summary(fun = "mean", geom = "bar") +
+  
+  stat_summary(fun.data = "mean_cl_normal", geom = "text",
+               aes(label = round(..y.., 2)), vjust = -0.5) +
+  
+  labs(title = "Média de Proficiência em Matemática por Acesso Wi-Fi",
+       x = "Possui Wi-Fi em casa?",
+       y = "Média de Proficiência em matemática (MT)") +
+  
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "none"
+  )
+```
+Interpretação do Gráfico (Wi-Fi):
+
+O gráfico de barras demonstra uma clara diferença descritiva. Alunos que relataram possuir Wi-Fi em casa apresentam uma média de proficiência em Matemática(269.97) superior à dos alunos que não possuem esse recurso(254.47).
 
 # Conclusão
 
