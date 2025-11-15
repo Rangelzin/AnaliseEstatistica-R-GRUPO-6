@@ -68,6 +68,12 @@ dados$Wifi_Label <- factor(dados$TX_RESP_Q13b,
 dados$Carro_Label <- factor(dados$TX_RESP_Q12f,
                             levels = c("A", "B", "C", "D"),
                             labels = c("Nenhum", "Um", "Dois", "Três ou mais"))
+
+# REGIÃO (ID_REGIAO) - Variável numérica na base, convertendo para rótulo
+# As regiões (1=Norte, 2=Nordeste, 3=Sudeste, 4=Sul, 5=Centro-Oeste) estão na variável ID_REGIAO
+dados$Regiao_Label <- factor(dados$ID_REGIAO,
+                            levels = c(1, 2, 3, 4, 5),
+                            labels = c("Norte", "Nordeste", "Sudeste", "Sul", "Centro-Oeste"))
 ```
 
 # Introdução
@@ -375,6 +381,49 @@ $${Nota}{MT} = `r round(b0_h3, 2)` - `r abs(round(b1_h3, 2))` \cdot (\text{Erro 
 **Poder Explicativo ($R^2$):** O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h3, 4)`. Isso significa que **`r round(r2_h3*100, 1)`%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado a alto, sendo o maior valor de $R^2$ encontrado nas hipóteses analisadas.
 
 **Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1_h3, 2)` indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em MT, espera-se uma redução de `r abs(round(b1_h3, 2))` pontos em sua nota de Matemática.
+
+## Análise Categórica: Proficiência em Matemática por Região
+
+Esta seção investiga a relação entre uma variável quantitativa (Proficiência em Matemática) e uma variável categórica (Região Geográfica), utilizando o **Box Plot** para visualizar a distribuição das notas em cada grupo.
+
+```{r box_plot_regiao, fig.cap="Box Plot da Proficiência em Matemática por Região", fig.pos = 'H'}
+# Filtra apenas alunos com nota de Matemática válida para a análise
+dados_validos_mt <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB))
+
+# Gera o Box Plot comparando Proficiência MT pela Região
+ggplot(dados_validos_mt, aes(x = Regiao_Label, y = PROFICIENCIA_MT_SAEB, fill = Regiao_Label)) +
+  # Plota os box plots, mantendo os outliers com transparência
+  geom_boxplot(outlier.alpha = 0.1) +
+  # Adiciona um asterisco (*) para representar a Média em cada box plot
+  stat_summary(fun = mean, geom = "point", shape = 8, size = 2, color = "black") +
+  labs(
+    title = "Proficiência em Matemática (MT) por Região",
+    subtitle = "Mediana (linha central) e Média (asterisco) por Região",
+    x = "Região Geográfica",
+    y = "Proficiência em Matemática (SAEB)"
+  ) +
+  scale_fill_brewer(palette = "Set1") + # Escolhe uma paleta de cores
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15)),
+    legend.position = "none" # Remove a legenda se for redundante
+  )
+```
+Interpretação do Box Plot:
+
+A análise do Box Plot revela disparidades regionais importantes e, notavelmente, uma ordenação de desempenho que se manifesta na amostra:
+
+Melhor Desempenho (Centro-Oeste e Sul): A Região Sul apresenta o melhor desempenho na amostra, com a mediana de proficiência (linha central da caixa) posicionada no ponto mais alto. A Região Centro-Oeste segue de perto, com uma distribuição de notas muito semelhante, indicando que, neste conjunto de dados, as notas centrais do Sul superam ligeiramente as do Centro-Oeste.
+
+Desempenho Intermediário (Sudeste): A Região Sudeste tem o terceiro melhor desempenho. Sua distribuição está claramente acima das regiões Norte e Nordeste, mas sua mediana e quartis estão posicionados abaixo do Centro-Oeste e Sul.
+
+Piores Desempenhos (Norte e Nordeste): As Regiões Norte e Nordeste exibem o desempenho mais baixo e mais concentrado na parte inferior da escala de proficiência. A maior parte dos alunos dessas regiões (representada pela caixa e mediana) obteve notas mais baixas em comparação com as demais regiões do país.
+
+Em termos de dispersão (tamanho das caixas e dos whiskers), todas as regiões mostram uma variabilidade interna similar na proficiência, o que sugere que o fator regional influencia primariamente a tendência central (média e mediana) das notas e não a dispersão dos resultados.
 
 
 # Conclusão
