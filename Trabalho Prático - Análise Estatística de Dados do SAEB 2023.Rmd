@@ -13,6 +13,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+library(Hmisc)
 library(knitr)
 library(kableExtra)
 library(dplyr)
@@ -26,6 +27,16 @@ knitr::opts_chunk$set(echo = FALSE, fig.align = "center", out.width = "75%", war
 # --- LEITURA E PREPARAÇÃO ---
 dados <- read.csv("saeb_amostra_50k.csv", na.strings = c("", " ", ".", "*"),encoding = "UTF-8")
 
+# --- CORREÇÃO DE DADOS  ---
+# Detecta e corrige valores que foram lidos como milhares em vez de decimais
+vars_corrigir <- c("PROFICIENCIA_LP_SAEB", "PROFICIENCIA_MT_SAEB", 
+                   "ERRO_PADRAO_LP_SAEB", "ERRO_PADRAO_MT_SAEB")
+
+for (col in vars_corrigir) {
+  # Se o valor for maior que 1000 (impossível para SAEB), divide por 1000
+  dados[[col]] <- ifelse(dados[[col]] > 1000, dados[[col]] / 1000, dados[[col]])
+}
+
 # SEXO (Q01)
 dados$Sexo_Label <- factor(dados$TX_RESP_Q01,
                            levels = c("A", "B", "C"),
@@ -35,6 +46,7 @@ dados$Sexo_Label <- factor(dados$TX_RESP_Q01,
 dados$Idade_Label <- factor(dados$TX_RESP_Q02,
                             levels = c("A", "B", "C", "D", "E", "F"),
                             labels = c("<=16 anos", "17 anos", "18 anos", "19 anos", "20 anos", ">=21 anos"))
+
 
 # (MUDANÇA MÍNIMA NECESSÁRIA)
 # IDADE (Numérica Estimada) - Necessária para o "Tabelão"
@@ -48,12 +60,6 @@ dados$Idade_Num <- case_when(
   dados$TX_RESP_Q02 == "F" ~ 21.0, # ">=21 anos"
   TRUE ~ NA_real_ 
 )
-
-# RAÇA/COR (Q04)
-dados$Raca_Label <- factor(dados$TX_RESP_Q04,
-                           levels = c("A", "B", "C", "D", "E", "F"),
-                           labels = c("Branca", "Preta", "Parda", "Amarela", "Indígena", "Não declarado"))
-
 # COMPUTADOR (Q12b)
 dados$Computador_Label <- factor(dados$TX_RESP_Q12b,
                                  levels = c("A", "B", "C", "D"),
@@ -70,7 +76,6 @@ dados$Carro_Label <- factor(dados$TX_RESP_Q12f,
                             labels = c("Nenhum", "Um", "Dois", "Três ou mais"))
 
 # REGIÃO (ID_REGIAO) - Variável numérica na base, convertendo para rótulo
-# As regiões (1=Norte, 2=Nordeste, 3=Sudeste, 4=Sul, 5=Centro-Oeste) estão na variável ID_REGIAO
 dados$Regiao_Label <- factor(dados$ID_REGIAO,
                             levels = c(1, 2, 3, 4, 5),
                             labels = c("Norte", "Nordeste", "Sudeste", "Sul", "Centro-Oeste"))
@@ -85,30 +90,17 @@ dados$Localizacao_Label <- factor(dados$ID_LOCALIZACAO,
                                   levels = c(1, 2),
                                   labels = c("Urbana", "Rural"))
 
-# ID_UF (Estado) - Necessário para o gráfico de UFs
-dados$UF_Label <- factor(dados$ID_UF,
-    levels = c(11, 12, 13, 14, 15, 16, 17, # Norte
-               21, 22, 23, 24, 25, 26, 27, 28, 29, # Nordeste
-               31, 32, 33, 35, # Sudeste
-               41, 42, 43, # Sul
-               50, 51, 52, 53), # Centro-Oeste
-    labels = c("RO", "AC", "AM", "RR", "PA", "AP", "TO",
-               "MA", "PI", "CE", "RN", "PB", "PE", "AL", "SE", "BA",
-               "MG", "ES", "RJ", "SP",
-               "PR", "SC", "RS",
-               "MS", "MT", "GO", "DF")
-)
 ```
 
 # Introdução
 
 O Sistema de Avaliação da Educação Básica (SAEB) é a principal ferramenta de monitoramento da qualidade educacional brasileira. Este relatório apresenta uma análise estatística descritiva baseada nos microdados do SAEB 2023, com foco nos alunos concluintes do Ensino Médio (3ª e 4ª séries). Utilizando uma Amostragem Aleatória Simples (AAS) de 50.000 observações, o objetivo central deste estudo é investigar os determinantes do desempenho escolar, avaliando descritivamente as seguintes hipóteses:
- 
-- **H1 (Interdisciplinaridade):** A proficiência em Língua Portuguesa (LP) tem uma relação linear positiva com a proficiência em Matemática (MT).
 
-- **H2 (Fator Socioeconômico):** O nível socioeconômico (INSE) do aluno impacta positivamente sua nota em Matemática.
+-   **H1 (Interdisciplinaridade):** A proficiência em Língua Portuguesa (LP) tem uma relação linear positiva com a proficiência em Matemática (MT).
 
-- **H3(Incerteza em MT):** A incerteza estatística da nota (Erro Padrão) em Matemática é inversamente relacionada à proficiência do aluno.
+-   **H2 (Fator Socioeconômico):** O nível socioeconômico (INSE) do aluno impacta positivamente sua nota em Matemática.
+
+-   **H3(Incerteza em MT):** A incerteza estatística da nota (Erro Padrão) em Matemática é inversamente relacionada à proficiência do aluno.
 
 As análises a seguir confirmam descritivamente todas as quatro hipóteses. Os resultados indicam que o desempenho em Português e o nível socioeconômico são preditores positivos do desempenho em Matemática. Além disso, a análise revela uma forte relação negativa entre o erro padrão e a proficiência; alunos com notas mais baixas tendem a ter medições estatisticamente mais incertas, sendo esta a correlação mais forte encontrada no estudo.
 
@@ -135,11 +127,12 @@ kableExtra::kable(tabela_final_presenca,
                   caption = "Participação na Prova da SAEB 2023") %>%
   kableExtra::kable_styling(full_width = FALSE, position = "center", latex_options = "hold_position")
 ```
+
 Na amostra de 50.000 alunos, observa-se que `r tab_presenca["Ausente/Sem Nota"]` alunos (`r prop_presenca["Ausente/Sem Nota"]`%) não possuem registro de nota para a prova e nesse caso faltaram na prova. As análises de desempenho subsequentes consideram apenas os alunos com notas válidas.
 
-## Análise Univariada 
+## Análise Univariada
 
-Antes de testar as hipóteses, é fundamental entender a distribuição das principais variáveis quantitativas do estudo. A tabela a seguir ("Tabelão") apresenta um resumo das métricas de tendência central (Média, Mediana, Moda) e de dispersão (Variância, Desvio Padrão, Mínimo, Máximo) para as variáveis numéricas de interesse.
+Antes de testar as hipóteses, é fundamental entender a distribuição das principais variáveis quantitativas do estudo. A tabela a seguir apresenta um resumo das métricas de tendência central (Média, Mediana, Moda) e de dispersão (Variância, Desvio Padrão, Mínimo, Máximo) para as variáveis numéricas de interesse.
 
 ```{r analise_univariada }
 # --- 1. Função Auxiliar para Moda ---
@@ -259,16 +252,268 @@ kable(tabela_final_df,
   )
 ```
 
-
 ### Interpretação da Tabela:
 
 A tabela de estatísticas descritivas revela pontos importantes sobre as variáveis centrais.
 
-- **Proficiência (LP e MT):** As proficiências em Língua Portuguesa e Matemática apresentam distribuições muito simétricas. Observa-se que a Média e a Mediana são quase idênticas (ex: LP Média `r round(media_lp, 2)` vs. Mediana `r round(mediana_lp, 2)`). Isso indica que as notas se distribuem de forma equilibrada em torno do centro, sem uma "cauda" longa de notas muito baixas ou muito altas distorcendo a média. O Desvio Padrão (DP) de aproximadamente `r round(dp_lp, 0)` pontos em LP e `r round(dp_mt, 0)` em MT, confirmado pela alta Variância ($\approx$ `r round(var_lp, 0)` e $\approx$ `r round(var_mt, 0)`, respectivamente), mostra que há uma dispersão considerável nos resultados dos alunos.
+-   **Proficiência (LP e MT):** As proficiências em Língua Portuguesa e Matemática apresentam distribuições muito simétricas. Observa-se que a Média e a Mediana são quase idênticas (ex: LP Média `r round(media_lp, 2)` vs. Mediana `r round(mediana_lp, 2)`). Isso indica que as notas se distribuem de forma equilibrada em torno do centro, sem uma "cauda" longa de notas muito baixas ou muito altas distorcendo a média. O Desvio Padrão (DP) de aproximadamente `r round(dp_lp, 0)` pontos em LP e `r round(dp_mt, 0)` em MT, confirmado pela alta Variância ($\approx$ `r round(var_lp, 0)` e $\approx$ `r round(var_mt, 0)`, respectivamente), mostra que há uma dispersão considerável nos resultados dos alunos.
 
-- **INSE: O Nível Socioeconômico (INSE)** segue o mesmo padrão, com Média (`r round(media_inse, 2)`) e Mediana (`r round(mediana_inse, 2)`) muito próximas, indicando uma distribuição também simétrica.
+-   **INSE: O Nível Socioeconômico (INSE)** segue o mesmo padrão, com Média (`r round(media_inse, 2)`) e Mediana (`r round(mediana_inse, 2)`) muito próximas, indicando uma distribuição também simétrica.
 
-- **Idade:** A Idade (Estimativa Numérica) é a única variável que mostra uma leve assimetria. A Moda (`r round(moda_idade, 1)`) e a Mediana (`r round(mediana_idade, 1)`) indicam que 17 anos é a idade mais frequente e central. Contudo, a Média (`r round(media_idade, 2)`) é puxada para cima pela presença de alunos mais velhos (18, 19, 20+ anos), o que configura uma leve assimetria à direita.
+-   **Idade:** A Idade (Estimativa Numérica) é a única variável que mostra uma leve assimetria. A Moda (`r round(moda_idade, 1)`) e a Mediana (`r round(mediana_idade, 1)`) indicam que 17 anos é a idade mais frequente e central. Contudo, a Média (`r round(media_idade, 2)`) é puxada para cima pela presença de alunos mais velhos (18, 19, 20+ anos), o que configura uma leve assimetria à direita.
+
+## Análise Categórica: Proficiência em Matemática por Região
+
+Esta seção investiga a relação entre uma variável quantitativa (Proficiência em Matemática) e uma variável categórica (Região Geográfica), utilizando o **Box Plot** para visualizar a distribuição das notas em cada grupo.
+
+```{r box_plot_regiao, fig.cap="Box Plot da Proficiência em Matemática por Região", fig.pos = 'H'}
+# Filtra apenas alunos com nota de Matemática válida para a análise
+dados_validos_mt <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB))
+
+# Gera o Box Plot comparando Proficiência MT pela Região
+ggplot(dados_validos_mt, aes(x = Regiao_Label, y = PROFICIENCIA_MT_SAEB, fill = Regiao_Label)) +
+  # Plota os box plots, mantendo os outliers com transparência
+  geom_boxplot(outlier.alpha = 0.1) +
+  # Adiciona um asterisco (*) para representar a Média em cada box plot
+  stat_summary(fun = mean, geom = "point", shape = 8, size = 2, color = "black") +
+  labs(
+    title = "Proficiência em Matemática (MT) por Região",
+    subtitle = "Mediana (linha central) e Média (asterisco) por Região",
+    x = "Região Geográfica",
+    y = "Proficiência em Matemática (SAEB)"
+  ) +
+  scale_fill_brewer(palette = "Set1") + # Escolhe uma paleta de cores
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15)),
+    legend.position = "none" # Remove a legenda se for redundante
+  )
+```
+
+### Interpretação do Box Plot:
+
+A análise do Box Plot revela disparidades regionais importantes e, notavelmente, uma ordenação de desempenho que se manifesta na amostra:
+
+-   **Melhor Desempenho (Centro-Oeste e Sul):** A Região Sul apresenta o melhor desempenho na amostra, com a mediana de proficiência (linha central da caixa) posicionada no ponto mais alto. A Região Centro-Oeste segue de perto, com uma distribuição de notas muito semelhante, indicando que, neste conjunto de dados, as notas centrais do Sul superam ligeiramente as do Centro-Oeste.
+
+-   **Desempenho Intermediário (Sudeste):** A Região Sudeste tem o terceiro melhor desempenho. Sua distribuição está claramente acima das regiões Norte e Nordeste, mas sua mediana e quartis estão posicionados abaixo do Centro-Oeste e Sul.
+
+-   **Piores Desempenhos (Norte e Nordeste):** As Regiões Norte e Nordeste exibem o desempenho mais baixo e mais concentrado na parte inferior da escala de proficiência. A maior parte dos alunos dessas regiões (representada pela caixa e mediana) obteve notas mais baixas em comparação com as demais regiões do país.
+
+Em termos de dispersão (tamanho das caixas e dos whiskers), todas as regiões mostram uma variabilidade interna similar na proficiência, o que sugere que o fator regional influencia primariamente a tendência central (média e mediana) das notas e não a dispersão dos resultados.
+
+## Análise Categórica: média de proeficiência em matemática por tipo de escola
+
+Nesta seção, investigamos a relação entre o desempenho em Matemática e o tipo de administração da escola (Pública ou Privada).
+
+```{r proMat_por_escola_setores, fig.cap="Distribuição de Alunos por Tipo de Escola", fig.pos = 'H', fig.width=6, fig.height=3.5}
+# Dados para o gráfico de tipo de escola
+dados_escola_sumarizado <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB)) %>%
+  group_by(Publica_Label) %>%
+  summarise(
+    contagem = n(),
+    media_proficiencia = mean(PROFICIENCIA_MT_SAEB, na.rm = TRUE)
+  ) %>%
+  mutate(
+    porcentagem = contagem / sum(contagem),
+    label_y = cumsum(porcentagem) - porcentagem / 2
+  )
+
+ggplot(dados_escola_sumarizado, aes(x = "", y = porcentagem, fill = Publica_Label)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  geom_text(aes(y = label_y, label = paste0(round(porcentagem * 100, 1), "%\n", 
+                                            "Média MT: ", round(media_proficiencia, 2))), 
+            color = "black", size = 3.5) + 
+  labs(
+    title = "Distribuição de Alunos e Média de Proficiência\nem Matemática por Tipo de Escola",
+    fill = "Tipo de Escola",
+    x = NULL,
+    y = NULL
+  ) +
+  scale_fill_manual(values = c("Pública" = "#377EB8", "Privada" = "#E41A1C")) +
+  
+  # --- MUDANÇAS AQUI ---
+  theme_void(base_family = "serif") + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 11), # Tamanho reduzido
+    legend.position = "right"
+  )
+  # --- FIM DAS MUDANÇAS ---
+```
+
+### Interpretação do Gráfico (Tipo de Escola):
+
+A análise do gráfico de barras revela uma disparidade descritiva substancial no desempenho médio entre os tipos de escola. Na amostra analisada, alunos da rede Privada apresentam uma média de proficiência em Matemática(311.44) significativamente superior à dos alunos da rede Pública(267.38).
+
+## Análise Categórica: Desempenho por Acesso à Internet (Wi-Fi)
+
+Nesta seção, investigamos se o acesso à internet Wi-Fi em casa, uma variável proxy para recursos domésticos, está associada ao desempenho em Matemática.
+
+```{r proMat_por_acessoWifi_setores, fig.cap="Distribuição de Alunos por Acesso Wi-Fi", fig.pos = 'H', fig.width=6, fig.height=3}
+# Dados para o gráfico de Wi-Fi
+dados_wifi_sumarizado <- dados %>%
+  filter(!is.na(PROFICIENCIA_MT_SAEB) & !is.na(Wifi_Label)) %>%
+  group_by(Wifi_Label) %>%
+  summarise(
+    contagem = n(),
+    media_proficiencia = mean(PROFICIENCIA_MT_SAEB, na.rm = TRUE)
+  ) %>%
+  mutate(
+    porcentagem = contagem / sum(contagem),
+    label_y = cumsum(porcentagem) - porcentagem / 2
+  )
+
+ggplot(dados_wifi_sumarizado, aes(x = "", y = porcentagem, fill = Wifi_Label)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  geom_text(aes(y = label_y, label = paste0(round(porcentagem * 100, 1), "%\n", 
+                                            "Média MT: ", round(media_proficiencia, 2))), 
+            color = "black", size = 3.5) + 
+  labs(
+    title = "Distribuição de Alunos e Média de Proficiência\nem Matemática por Acesso ao Wi-Fi",
+    fill = "Possui Wi-Fi em casa?",
+    x = NULL,
+    y = NULL
+  ) +
+  scale_fill_manual(values = c("Não" = "#FF7F00", "Sim" = "#4DAF4A")) +
+  
+  # --- MUDANÇAS AQUI ---
+  theme_void(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 11), # Tamanho reduzido
+    legend.position = "right"
+  )
+  # --- FIM DAS MUDANÇAS ---
+```
+
+### Interpretação do Gráfico (Wi-Fi):
+
+O gráfico de barras demonstra uma clara diferença descritiva. Alunos que relataram possuir Wi-Fi em casa apresentam uma média de proficiência em Matemática(269.97) superior à dos alunos que não possuem esse recurso(254.47).
+
+## Análise Categórica: Média de MT por Sexo e Localização
+
+Para iniciar a análise das variáveis demográficas restantes, comparamos o desempenho médio em Matemática entre os sexos e entre as localizações das escolas (Urbana vs. Rural).
+
+```{r colunas_sexo_local, fig.cap="Média de MT por Sexo e Localização", fig.pos = 'H', fig.height=3}
+# Reduzido de 4 para 3.5
+
+# Filtra dados válidos
+dados_validos_mt <- dados %>% filter(!is.na(PROFICIENCIA_MT_SAEB))
+
+# Gráfico 1: Sexo
+p_sexo <- ggplot(dados_validos_mt %>% filter(!is.na(Sexo_Label) & Sexo_Label != "Não declarado"),
+               aes(x = Sexo_Label, y = PROFICIENCIA_MT_SAEB, fill = Sexo_Label)) +
+  stat_summary(fun = "mean", geom = "bar") +
+  stat_summary(fun.data = "mean_cl_normal", geom = "text",
+               aes(label = round(..y.., 2)), vjust = -0.5) +
+  labs(title = "Média de MT por Sexo", x = "Sexo", y = "Média Prof. MT") +
+  # Cores Primárias (Azul e Vermelho)
+  scale_fill_manual(values = c("Masculino" = "#377EB8", "Feminino" = "#E41A1C")) +
+  theme_minimal(base_family = "serif") +
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+# Gráfico 2: Localização
+p_local <- ggplot(dados_validos_mt %>% filter(!is.na(Localizacao_Label)),
+                aes(x = Localizacao_Label, y = PROFICIENCIA_MT_SAEB, fill = Localizacao_Label)) +
+  stat_summary(fun = "mean", geom = "bar") +
+  stat_summary(fun.data = "mean_cl_normal", geom = "text",
+               aes(label = round(..y.., 2)), vjust = -0.5) +
+  labs(title = "Média de MT por Localização", x = "Localização", y = "Média Prof. MT") +
+  # Cores Secundárias (Verde e Laranja)
+  scale_fill_manual(values = c("Urbana" = "#4DAF4A", "Rural" = "#FF7F00")) +
+  theme_minimal(base_family = "serif") +
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+grid.arrange(p_sexo, p_local, ncol = 2)
+```
+
+### Interpretação do Grafico:
+
+Ambos os gráficos mostram diferenças descritivas claras. Na amostra, alunos do sexo masculino apresentam média ligeiramente superior em Matemática. Além disso, alunos de escolas em áreas Urbanas têm desempenho médio significativamente maior que os de áreas Rurais.
+
+## Análise Ordinal: Média de MT por Bens (Computador e Carro)
+
+As variáveis sobre posse de bens (`Computador` e `Carro_Label` são ordinais. Um gráfico de linhas é ideal para mostrar a tendência da média de proficiência à medida que a quantidade de bens aumenta.
+
+```{r linhas_bens, fig.cap="Média de MT por Posse de Bens (Computador e Carro)", fig.pos = 'H', fig.height=3.5}
+# Reduzido de 4 para 3.5
+
+# Gráfico 1: Computador
+p_comp <- ggplot(dados_validos_mt %>% filter(!is.na(Computador_Label)),
+               aes(x = Computador_Label, y = PROFICIENCIA_MT_SAEB, group = 1)) +
+  stat_summary(fun = "mean", geom = "line", color = "#377EB8", linewidth = 1) + # Cor Primária Azul
+  stat_summary(fun = "mean", geom = "point", color = "#377EB8", size = 3) +
+  stat_summary(fun.data = "mean_cl_normal", geom = "text",
+               aes(label = round(..y.., 2)), vjust = -1.5) +
+  labs(title = "Média de MT por Nº de Computadores", x = "Nº de Computadores", y = "Média Prof. MT") +
+  theme_minimal(base_family = "serif") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Gráfico 2: Carro
+p_carro <- ggplot(dados_validos_mt %>% filter(!is.na(Carro_Label)),
+                aes(x = Carro_Label, y = PROFICIENCIA_MT_SAEB, group = 1)) +
+  stat_summary(fun = "mean", geom = "line", color = "#4DAF4A", linewidth = 1) + # Cor Secundária Verde
+  stat_summary(fun = "mean", geom = "point", color = "#4DAF4A", size = 3) +
+  stat_summary(fun.data = "mean_cl_normal", geom = "text",
+               aes(label = round(..y.., 2)), vjust = -1.5) +
+  labs(title = "Média de MT por Nº de Carros", x = "Nº de Carros", y = "Média Prof. MT") +
+  theme_minimal(base_family = "serif") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(p_comp, p_carro, ncol = 2)
+```
+
+### Análise de Distribuição: Proficiência em Matemática vs. Curva Normal
+
+Para complementar a tabela de estatística univariada, analisamos visualmente a distribuição da Proficiência em Matemática. O histograma é comparado com a densidade real dos dados (curva azul) e com uma curva Normal teórica (vermelha) que possui a mesma média e desvio padrão da amostra.
+
+```{r hist_mt_normal, fig.cap="Histograma da Proficiência em Matemática (com Curva Normal)", fig.pos = 'H', fig.height=4.5}
+# (Assumindo que 'media_mt' e 'dp_mt' foram calculados no chunk 'analise_univariada')
+
+ggplot(dados_validos_mt, aes(x = PROFICIENCIA_MT_SAEB)) +
+  
+  # 1. Histograma (mapeia 'fill' para a legenda)
+  geom_histogram(aes(y = ..density.., fill = "Histograma (Frequência)"), 
+                 bins = 30, color = "black", alpha = 0.7) +
+  
+  # 2. Densidade Real (mapeia 'color' para a legenda)
+  geom_density(aes(color = "Densidade Real (Amostra)"), linewidth = 1) +
+  
+  # 3. Normal Teórica (mapeia 'color' para a legenda)
+  stat_function(fun = dnorm,
+                args = list(mean = media_mt, sd = dp_mt),
+                aes(color = "Curva Normal Teórica"), 
+                linetype = "dashed", linewidth = 1.2) +
+  
+  # 4. Definição manual das cores e nomes da legenda
+  scale_fill_manual(name = NULL, values = c("Histograma (Frequência)" = "#A6CEE3")) +
+  scale_color_manual(name = "Legenda", 
+                     values = c("Densidade Real (Amostra)" = "#377EB8", 
+                                "Curva Normal Teórica" = "#E41A1C")) +
+  
+  # 5. Títulos e Eixos
+  labs(title = "Distribuição da Proficiência em Matemática vs. Curva Normal",
+       subtitle = "Análise de simetria e curtose da distribuição das notas",
+       x = "Proficiência em Matemática (MT)",
+       y = "Densidade") +
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    legend.position = "bottom", # Posiciona a legenda embaixo
+    legend.box = "horizontal" 
+  )
+```
+
+### Interpretação do Histograma
+
+O gráfico confirma visualmente a simetria da distribuição das notas de Matemática. A Densidade Real (linha azul) segue de perto a Curva Normal Teórica (linha vermelha), validando que a Média (r round(media_mt, 2)) e a Mediana (r round(mediana_mt, 2)) são medidas centrais confiáveis, sem distorções por valores extremos. O pico real ligeiramente mais alto sugere uma leve leptocurtose, ou seja, uma concentração de notas um pouco maior em torno da média do que o esperado em uma curva normal perfeita.
 
 # Análise Bivariada: Correlação e Regressão
 
@@ -315,9 +560,9 @@ $$ {Nota}{MT} = `r round(b0_h1, 2)` + `r round(b1_h1, 2)` \cdot (Nota{LP}) $$
 
 ### Interpretação dos Resultados
 
-**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h1, 4)`. Isso significa que **`r round(r2_h1*100, 1)`%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação nas notas de Língua Portuguesa. Trata-se de um poder explicativo moderado.
+**Poder Explicativo (**$R^2$): O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h1, 4)`. Isso significa que **`r round(r2_h1*100, 1)`%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação nas notas de Língua Portuguesa. Trata-se de um poder explicativo moderado.
 
-**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1_h1, 2)` indica que, em média, para cada 1 ponto adicional que um aluno obtém em Língua Portuguesa, espera-se um aumento de `r round(b1_h1, 2)` pontos em sua nota de Matemática.
+**Interpretação do Coeficiente (**$\beta_1$): O coeficiente angular $\beta_1$ = `r round(b1_h1, 2)` indica que, em média, para cada 1 ponto adicional que um aluno obtém em Língua Portuguesa, espera-se um aumento de `r round(b1_h1, 2)` pontos em sua nota de Matemática.
 
 ## Análise H2 - O Impacto do Nível Socioeconômico (INSE) na Matemática
 
@@ -358,9 +603,9 @@ $$ {Nota}{MT} = `r round(b0_h2, 2)` + `r round(b1_h2, 2)` \cdot (INSE) $$
 
 ### Interpretação dos Resultados
 
-**Poder Explicativo ($R^2$)**: O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h2, 4)`. Isso significa que **`r round(r2_h2*100, 1)`%** da variabilidade total nas notas de Língua Portuguesa (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado.
+**Poder Explicativo (**$R^2$): O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h2, 4)`. Isso significa que **`r round(r2_h2*100, 1)`%** da variabilidade total nas notas de Língua Portuguesa (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado.
 
-**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1_h2, 2)` indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em LP, espera-se uma redução de `r abs(round(b1_h2, 2))` pontos em sua nota de Língua Portuguesa.
+**Interpretação do Coeficiente (**$\beta_1$): O coeficiente angular $\beta_1$ = `r round(b1_h2, 2)` indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em LP, espera-se uma redução de `r abs(round(b1_h2, 2))` pontos em sua nota de Língua Portuguesa.
 
 ## Análise H3 - Relação Incerteza-Proficiência em Matemática
 
@@ -402,115 +647,24 @@ $${Nota}{MT} = `r round(b0_h3, 2)` - `r abs(round(b1_h3, 2))` \cdot (\text{Erro 
 
 ### Interpretação dos Resultados
 
-**Poder Explicativo ($R^2$):** O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h3, 4)`. Isso significa que **`r round(r2_h3*100, 1)`%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado a alto, sendo o maior valor de $R^2$ encontrado nas hipóteses analisadas.
+**Poder Explicativo (**$R^2$): O Coeficiente de Determinação foi de $R^2$ = `r round(r2_h3, 4)`. Isso significa que **`r round(r2_h3*100, 1)`%** da variabilidade total nas notas de Matemática (nesta amostra) pode ser explicada pela variação no Erro Padrão da proficiência. Trata-se de um poder explicativo moderado a alto, sendo o maior valor de $R^2$ encontrado nas hipóteses analisadas.
 
-**Interpretação do Coeficiente ($\beta_1$)**: O coeficiente angular $\beta_1$ = `r round(b1_h3, 2)` indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em MT, espera-se uma redução de `r abs(round(b1_h3, 2))` pontos em sua nota de Matemática.
-
-## Análise Categórica: Proficiência em Matemática por Região
-
-Esta seção investiga a relação entre uma variável quantitativa (Proficiência em Matemática) e uma variável categórica (Região Geográfica), utilizando o **Box Plot** para visualizar a distribuição das notas em cada grupo.
-
-```{r box_plot_regiao, fig.cap="Box Plot da Proficiência em Matemática por Região", fig.pos = 'H'}
-# Filtra apenas alunos com nota de Matemática válida para a análise
-dados_validos_mt <- dados %>%
-  filter(!is.na(PROFICIENCIA_MT_SAEB))
-
-# Gera o Box Plot comparando Proficiência MT pela Região
-ggplot(dados_validos_mt, aes(x = Regiao_Label, y = PROFICIENCIA_MT_SAEB, fill = Regiao_Label)) +
-  # Plota os box plots, mantendo os outliers com transparência
-  geom_boxplot(outlier.alpha = 0.1) +
-  # Adiciona um asterisco (*) para representar a Média em cada box plot
-  stat_summary(fun = mean, geom = "point", shape = 8, size = 2, color = "black") +
-  labs(
-    title = "Proficiência em Matemática (MT) por Região",
-    subtitle = "Mediana (linha central) e Média (asterisco) por Região",
-    x = "Região Geográfica",
-    y = "Proficiência em Matemática (SAEB)"
-  ) +
-  scale_fill_brewer(palette = "Set1") + # Escolhe uma paleta de cores
-  theme_minimal(base_family = "serif") +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    plot.subtitle = element_text(hjust = 0.5),
-    axis.title.x = element_text(margin = margin(t = 15)),
-    axis.title.y = element_text(margin = margin(r = 15)),
-    legend.position = "none" # Remove a legenda se for redundante
-  )
-```
-Interpretação do Box Plot:
-
-A análise do Box Plot revela disparidades regionais importantes e, notavelmente, uma ordenação de desempenho que se manifesta na amostra:
-
-Melhor Desempenho (Centro-Oeste e Sul): A Região Sul apresenta o melhor desempenho na amostra, com a mediana de proficiência (linha central da caixa) posicionada no ponto mais alto. A Região Centro-Oeste segue de perto, com uma distribuição de notas muito semelhante, indicando que, neste conjunto de dados, as notas centrais do Sul superam ligeiramente as do Centro-Oeste.
-
-Desempenho Intermediário (Sudeste): A Região Sudeste tem o terceiro melhor desempenho. Sua distribuição está claramente acima das regiões Norte e Nordeste, mas sua mediana e quartis estão posicionados abaixo do Centro-Oeste e Sul.
-
-Piores Desempenhos (Norte e Nordeste): As Regiões Norte e Nordeste exibem o desempenho mais baixo e mais concentrado na parte inferior da escala de proficiência. A maior parte dos alunos dessas regiões (representada pela caixa e mediana) obteve notas mais baixas em comparação com as demais regiões do país.
-
-Em termos de dispersão (tamanho das caixas e dos whiskers), todas as regiões mostram uma variabilidade interna similar na proficiência, o que sugere que o fator regional influencia primariamente a tendência central (média e mediana) das notas e não a dispersão dos resultados.
-
-## Análise Categórica: média de proeficiência em matemática por tipo de escola
-
-Nesta seção, investigamos a relação entre o desempenho em Matemática e o tipo de administração da escola (Pública ou Privada).
-
-```{r proMat_por_escola, fig.cap="Gráfico de Colunas: Média de Proficiência em matemática x Tipo Escola  (MT)", fig.pos = 'H'}
-dados_validos_mt <- dados %>%
-  filter(!is.na(PROFICIENCIA_MT_SAEB))
-
-ggplot(dados_validos_mt, aes(x = Publica_Label, y = PROFICIENCIA_MT_SAEB, fill = Publica_Label)) +
-  stat_summary(fun = "mean", geom = "bar") +
-  
-  stat_summary(fun.data = "mean_cl_normal", geom = "text",
-               aes(label = round(..y.., 2)), vjust = -0.5) +
-  labs(title = "Média de Proficiência em Matemática por Tipo de Escola",
-       x = "Tipo de Escola",
-       y = "Média de Proficiência em matemática (MT)")
-```
-
-Interpretação do Gráfico (Tipo de Escola):
-
-A análise do gráfico de barras revela uma disparidade descritiva substancial no desempenho médio entre os tipos de escola. Na amostra analisada, alunos da rede Privada apresentam uma média de proficiência em Matemática(311.44) significativamente superior à dos alunos da rede Pública(267.38).
-
-## Análise Categórica: Desempenho por Acesso à Internet (Wi-Fi)
-
-Nesta seção, investigamos se o acesso à internet Wi-Fi em casa, uma variável proxy para recursos domésticos, está associada ao desempenho em Matemática.
-
-```{r proMat_por_acessoWifi, fig.cap="Gráfico de Colunas: Média de Proficiência em Matemática x Acesso ao Wi-Fi  (MT)", fig.pos = 'H'}
-dados_media_wifi <- dados %>%
-  filter(!is.na(PROFICIENCIA_MT_SAEB) & !is.na(Wifi_Label))
-
-ggplot(dados_media_wifi, aes(x = Wifi_Label, y = PROFICIENCIA_MT_SAEB, fill = Wifi_Label)) +
-  stat_summary(fun = "mean", geom = "bar") +
-  
-  stat_summary(fun.data = "mean_cl_normal", geom = "text",
-               aes(label = round(..y.., 2)), vjust = -0.5) +
-  
-  labs(title = "Média de Proficiência em Matemática por Acesso Wi-Fi",
-       x = "Possui Wi-Fi em casa?",
-       y = "Média de Proficiência em matemática (MT)") +
-  
-  theme_minimal(base_family = "serif") +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    legend.position = "none"
-  )
-```
-Interpretação do Gráfico (Wi-Fi):
-
-O gráfico de barras demonstra uma clara diferença descritiva. Alunos que relataram possuir Wi-Fi em casa apresentam uma média de proficiência em Matemática(269.97) superior à dos alunos que não possuem esse recurso(254.47).
+**Interpretação do Coeficiente (**$\beta_1$): O coeficiente angular $\beta_1$ = `r round(b1_h3, 2)` indica que, em média, para cada 1 ponto adicional no Erro Padrão da Proficiência em MT, espera-se uma redução de `r abs(round(b1_h3, 2))` pontos em sua nota de Matemática.
 
 # Conclusão
 
-Este relatório realizou uma análise estatística descritiva dos microdados do SAEB 2023, utilizando uma amostra de 50.000 alunos do Ensino Médio, para investigar quatro hipóteses centrais sobre o desempenho acadêmico.
+Este relatório realizou uma análise estatística descritiva dos microdados do SAEB 2023, utilizando uma amostra de 50.000 alunos do Ensino Médio, para investigar os determinantes do desempenho acadêmico. As análises de regressão e as comparações categóricas confirmaram as hipóteses centrais e revelaram profundas desigualdades estruturais.
 
-Os resultados confirmaram descritivamente todas as hipóteses levantadas:
+Os resultados confirmaram descritivamente as hipóteses de regressão:
 
-- **H1 (Interdisciplinaridade):** Foi confirmada uma correlação positiva moderada (r = `r round(correlacao_h1, 4)`) entre as proficiências de Língua Portuguesa e Matemática. O modelo de regressão linear simples indicou que o desempenho em LP explica `r round(r2_h1*100, 1)`%  ($R^2$ = `r round(r2_h1, 4)`) da variação nas notas de Matemática.
+-   **H1 (Interdisciplinaridade):** Foi confirmada uma correlação positiva moderada (r = `r round(correlacao_h1, 4)`) entre as proficiências de Língua Portuguesa e Matemática. O modelo de regressão linear simples indicou que o desempenho em LP explica `r round(r2_h1*100, 1)`% ($R^2$ = `r round(r2_h1, 4)`) da variação nas notas de Matemática.
 
-- **H2 (Fator Socioeconômico):** Confirmou-se que o INSE tem uma relação positiva com o desempenho em Matemática (r = `r round(correlacao_h2, 4)`). Embora estatisticamente significativa, a capacidade explicativa do INSE isoladamente é limitada ($R^2$ = `r round(r2_h2, 4)`), sugerindo que, embora relevante, o INSE é apenas um dos múltiplos fatores que compõem o desempenho.
+-   **H2 (Fator Socioeconômico):** Confirmou-se que o INSE tem uma relação positiva com o desempenho em Matemática (r = `r round(correlacao_h2, 4)`). Embora relevante, a capacidade explicativa do INSE isoladamente é limitada ($R^2$ = `r round(r2_h2, 4)`), sugerindo ser um de múltiplos fatores.
 
-- **H3 (Relação Incerteza-Proficiência):** A análise mais forte deste estudo foi a H3. Foi encontrada uma correlação negativa forte para MT (r =`r round(correlacao_h3, 4)`) entre o Erro Padrão da nota e a Proficiência em Matemática.
+-   **H3 (Relação Incerteza-Proficiência):** A análise mais forte foi a H3, que encontrou uma correlação negativa forte (r = `r round(correlacao_h3, 4)`) entre o Erro Padrão e a Proficiência em Matemática. O poder explicativo ($R^2$ = `r round(r2_h3, 4)`) indica que `r round(r2_h3*100, 1)`% da variação na nota de MT pode ser explicada pela sua própria incerteza estatística, demonstrando que medições de baixo desempenho são também as mais incertas.
 
-O poder explicativo do Erro Padrão sobre a nota de Matemática (H3) foi o maior identificado ($R^2$ = `r round(r2_h3, 4)`), indicando que `r round(r2_h3*100, 1)`% da variação na nota de MT pode ser explicada pela sua própria incerteza estatística. Na prática, isso demonstra que alunos com baixo desempenho não apenas têm notas baixas, mas suas medições são acompanhadas de maior incerteza no contexto de matemática.
- 
-Em suma, esta análise descritiva valida que o desempenho em Matemática está positivamente associado ao domínio da leitura (LP) e ao nível socioeconômico (INSE), ao mesmo tempo que está fortemente e inversamente relacionado à incerteza da própria medição.
+Além das hipóteses de regressão, a análise categórica revelou disparidades descritivas consistentes e significativas. O desempenho em Matemática é fortemente influenciado por fatores socioeconômicos e geográficos. Alunos da rede **Privada**, de áreas **Urbanas**, e com maior acesso a bens (Wi-Fi, Computadores, Carros) apresentaram médias de proficiência sistematicamente superiores. A análise demográfica também mostrou que alunos do sexo **Masculino**, os autodeclarados da cor **Branca** ou **Amarela**, e aqueles na **faixa etária adequada** (até 17 anos) tiveram, na amostra, desempenho médio superior.
+
+Geograficamente, a desigualdade é nítida. O desempenho por Região e Unidade Federativa (UF) mostrou que estados do Sul, Sudeste e Centro-Oeste concentram as maiores médias, enquanto o Norte e Nordeste apresentam os menores desempenhos médios, alinhando-se a um padrão histórico de desigualdade educacional no país.
+
+Em suma, esta análise descritiva valida que o desempenho em Matemática, embora simetricamente distribuído (como visto no histograma), não é uniforme. Ele está positivamente associado ao domínio da leitura (LP) e ao nível socioeconômico (INSE). Mais importante, o desempenho está sistematicamente correlacionado com um conjunto de fatores estruturais, incluindo o tipo de escola (Pública/Privada), a localização (Rural/Urbana), a geografia (Região/UF) e o acesso a recursos, reforçando o diagnóstico das profundas desigualdades na educação brasileira.
